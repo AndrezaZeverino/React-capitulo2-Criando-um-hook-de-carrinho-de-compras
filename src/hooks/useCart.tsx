@@ -1,4 +1,4 @@
-import { createContext, ReactNode, useContext, useState } from 'react';
+import { createContext, ReactNode, useContext, useEffect, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 import { api } from '../services/api';
 import { Product } from '../types';
@@ -31,6 +31,23 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
 
     return [];
   });
+
+  /* aqui estou colocando a lógica para sempre ir realizando o Set Item, quando o estado do carrinho mudar*/
+
+  const prevCartRef = useRef<Product[]>();
+  useEffect(() => {
+    prevCartRef.current = cart;
+  })
+
+  const cartPreviousValue = prevCartRef.current ?? cart;
+
+  useEffect(() => {
+    if (cartPreviousValue !== cart) {
+      localStorage.setItem('@RocketShoes:cart', JSON.stringify(cart));
+    }
+  }, [cart, cartPreviousValue]);
+
+  
 
   const addProduct = async (productId: number) => {
     try {
@@ -72,7 +89,6 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
 
       setCart(updatedCart);
       /*setCart para as alterações feitas acima serem salvas no carrinho*/
-      localStorage.setItem('@RocketShoes:cart', JSON.stringify(updatedCart))
     } catch {
       toast.error('Erro na adição do produto'); 
     }
@@ -89,7 +105,6 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
         updatedCart.splice(productIndex, 1);
         //splice remove os elementos do array
         setCart(updatedCart)
-        localStorage.setItem('@RocketShoes:cart', JSON.stringify(updatedCart));
       } else {
         throw Error(); //quando dou esse comando ele pula direto paara o erro do catch
       }
@@ -121,7 +136,6 @@ export function CartProvider({ children }: CartProviderProps): JSX.Element {
       if (productExists) {
           productExists.amount = amount;
           setCart(updatedCart);
-          localStorage.setItem('@RocketShoes:cart', JSON.stringify(updatedCart));
       } else {
         throw Error();
       }
